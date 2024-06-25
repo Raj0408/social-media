@@ -34,17 +34,18 @@ dicts = [{
     "2" : "this is second page", 
 }]
 
-# @app.on_event("startup")
-# async def startup():
-#     try:
-#         await database.connect()
-#     except Exception as error:
-#         print("Error occurred during database connection:", error)
+@app.on_event("startup")
+async def startup():
+    try:
+        await database.connect()
+    except Exception as error:
+        print("Error occurred during database connection:", error)
 
 
 @app.get("/sql")
 def sql(db : Session = Depends(get_db)):
-    return {"return " : "2022"}
+    posts = db.query(models.Posts).all()
+    return {"return " : posts}
 
 @app.get("/")
 async def read_root():
