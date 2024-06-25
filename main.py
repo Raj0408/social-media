@@ -60,19 +60,22 @@ async def read_root():
 
 
 @app.post("/creatpost")
-async def create_post(payload : Posts):
-    print(payload)
-    title = payload.title
-    content =payload.content
-    rating = payload.rating
-    query = f"INSERT INTO posts(title, content, rating) VALUES ((:title),(:content),(:rating))"
-    try:
+async def create_post(payload : Posts , db : Session = Depends(get_db)):
+    # print(payload)
+    # title = payload.title
+    # content =payload.content
+    # rating = payload.rating
+    # query = f"INSERT INTO posts(title, content, rating) VALUES ((:title),(:content),(:rating))"
+    # try:
         
-        last_record_id = await database.execute(query=query, values=payload.model_dump())
-    except Exception as error:
-        print("Error Occured" , error)
-    return {"id": "last_record_id"}
-    
+    #     last_record_id = await database.execute(query=query, values=payload.model_dump())
+    # except Exception as error:
+    #     print("Error Occured" , error)
+    # return {"id": "last_record_id"}
+    new_post = models.Posts(**payload.model_dump())
+    db.add(new_post)
+    db.commit()
+    db.refresh(new_post)
 
 
 
