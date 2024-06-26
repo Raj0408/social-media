@@ -6,7 +6,7 @@ from pydantic import BaseModel
 from databases import Database
 from sqlalchemy.orm import Session
 
-from . import models
+from . import models,schemas
 from .database.database import SessionLocal, engine
 
 DATABASE_URL = "postgresql://postgres:root@localhost/temp"
@@ -21,10 +21,7 @@ def get_db():
     finally:
         db.close()
 
-class Posts(BaseModel):
-    title :str
-    content : str
-    rating : Optional[int] = 0
+
 
 app = FastAPI()
 
@@ -59,8 +56,8 @@ async def read_root():
 #         return dicts[idf]
 
 
-@app.post("/creatpost")
-async def create_post(payload : Posts , db : Session = Depends(get_db)):
+@app.post("/creatpost",response_model=schemas.post)
+async def create_post(payload : schemas.postcreate , db : Session = Depends(get_db)):
     # print(payload)
     # title = payload.title
     # content =payload.content
@@ -76,6 +73,8 @@ async def create_post(payload : Posts , db : Session = Depends(get_db)):
     db.add(new_post)
     db.commit()
     db.refresh(new_post)
+
+    return new_post
 
 
 
