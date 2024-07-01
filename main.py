@@ -5,21 +5,14 @@ from fastapi.params import Body
 from pydantic import BaseModel
 from databases import Database
 from sqlalchemy.orm import Session
-
-from . import models,schemas
-from .database.database import SessionLocal, engine
+from . import models
+from databases import database as db
+from routers import posts , users
 
 DATABASE_URL = "postgresql://postgres:root@localhost/temp"
 database = Database(DATABASE_URL)
 
-models.Base.metadata.create_all(bind=engine)
-
-def get_db():
-    db = SessionLocal()
-    try:
-        yield db
-    finally:
-        db.close()
+models.Base.metadata.create_all(bind=db.engine)
 
 
 
@@ -31,50 +24,21 @@ dicts = [{
     "2" : "this is second page", 
 }]
 
-@app.on_event("startup")
-async def startup():
-    try:
-        await database.connect()
-    except Exception as error:
-        print("Error occurred during database connection:", error)
+# @app.on_event("startup")
+# async def startup():
+#     try:
+#         await database.connect()
+#     except Exception as error:
+#         print("Error occurred during database connection:", error)
 
 
 @app.get("/sql")
-def sql(db : Session = Depends(get_db)):
+def sql(db : Session = Depends(db.get_db)):
     posts = db.query(models.Posts).all()
     return {"return " : posts}
 
-@app.get("/")
-async def read_root():
-    query = "SELECT * FROM posts"
-    posts = await database.fetch_all(query=query)
-    return {"posts" : posts[2]["title"]}
-
-# @app.get("/{idf:str}")
-# def get_id(idf):
-#     if idf in dicts.keys():
-#         return dicts[idf]
-
-
-@app.post("/creatpost",response_model=schemas.post)
-async def create_post(payload : schemas.postcreate , db : Session = Depends(get_db)):
-    # print(payload)
-    # title = payload.title
-    # content =payload.content
-    # rating = payload.rating
-    # query = f"INSERT INTO posts(title, content, rating) VALUES ((:title),(:content),(:rating))"
-    # try:
-        
-    #     last_record_id = await database.execute(query=query, values=payload.model_dump())
-    # except Exception as error:
-    #     print("Error Occured" , error)
-    # return {"id": "last_record_id"}
-    new_post = models.Posts(**payload.model_dump())
-    db.add(new_post)
-    db.commit()
-    db.refresh(new_post)
-
-    return new_post
+app.include_router(posts.router)
+# app.include_router(users.router)
 
 
 
